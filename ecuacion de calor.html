@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resolvedor de Ecuación del Calor - Método Explícito</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --success: #2ecc71;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --warning: #f39c12;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+        
+        .subtitle {
+            font-weight: normal;
+            opacity: 0.9;
+            font-size: 1.2rem;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 1100px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        input:focus, select:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+        
+        .input-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .input-row .form-group {
+            flex: 1;
+        }
+        
+        button {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .btn-reset {
+            background-color: var(--accent);
+        }
+        
+        .btn-reset:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .info-box {
+            background-color: #e8f4fc;
+            border-left: 4px solid var(--secondary);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning-box {
+            background-color: #fef9e7;
+            border-left: 4px solid var(--warning);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .math-display {
+            font-family: 'Times New Roman', Times, serif;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            overflow-x: auto;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px;
+            display: none;
+        }
+        
+        .spinner {
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--secondary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .results-section {
+            grid-column: 1 / -1;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #e1e8ed;
+        }
+        
+        th {
+            background-color: var(--light);
+            font-weight: 600;
+            color: var(--primary);
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .time-header {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .stability-condition {
+            background-color: #fff8e1;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .parameters-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .parameter-card {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .parameter-card h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        
+        .parameter-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .step-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: var(--success);
+            color: white;
+            text-align: center;
+            line-height: 20px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        
+        .calculation-steps {
+            margin-top: 20px;
+        }
+        
+        .calculation-step {
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 3px solid var(--light);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Resolvedor de Ecuación del Calor</h1>
+            <p class="subtitle">Método Explícito de Diferencias Finitas</p>
+        </header>
+        
+        <div class="main-content">
+            <section class="card">
+                <h2>Parámetros del Problema</h2>
+                
+                <div class="form-group">
+                    <label for="length">Longitud del dominio (L):</label>
+                    <input type="number" id="length" value="1.0" step="0.1" min="0.1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="time">Tiempo máximo de simulación (T):</label>
+                    <input type="number" id="time" value="0.1" step="0.01" min="0.01">
+                </div>
+                
+                <div class="input-row">
+                    <div class="form-group">
+                        <label for="nx">Número de puntos espaciales (Nx):</label>
+                        <input type="number" id="nx" value="5" min="3" max="20">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nt">Número de pasos temporales (Nt):</label>
+                        <input type="number" id="nt" value="10" min="1" max="100">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="alpha">Difusividad térmica (α):</label>
+                    <input type="number" id="alpha" value="0.0842" step="0.0001" min="0.0001">
+                </div>
+                
+                <div class="button-group">
+                    <button id="solve-btn" class="btn-success">
+                        <span>Calcular Solución</span>
+                    </button>
+                    <button id="reset-btn" class="btn-reset">Restablecer</button>
+                </div>
+                
+                <div class="info-box">
+                    <strong>Condiciones del problema:</strong>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Condición inicial: u(x,0) = sin(π·x)</li>
+                        <li>Condiciones de frontera: u(0,t) = 0, u(L,t) = 0</li>
+                    </ul>
+                </div>
+            </section>
+            
+            <section class="card">
+                <h2>Información del Método</h2>
+                
+                <div class="info-box">
+                    <strong>Ecuación del Calor:</strong>
+                    <div class="math-display">
+                        ∂u/∂t = α ∂²u/∂x²
+                    </div>
+                </div>
+                
+                <div class="stability-condition">
+                    <strong>Condición de estabilidad (CFL):</strong>
+                    <div class="math-display">
+                        r = α · Δt / (Δx)² ≤ 0.5
+                    </div>
+                    <p>Si esta condición no se cumple, la solución puede volverse inestable.</p>
+                </div>
+                
+                <div class="math-display">
+                    U<sub>i</sub><sup>l+1</sup> = U<sub>i</sub><sup>l</sup> + r (U<sub>i+1</sub><sup>l</sup> - 2U<sub>i</sub><sup>l</sup> + U<sub>i-1</sub><sup>l</sup>)
+                </div>
+                
+                <div class="parameters-grid" id="calculated-params">
+                    <!-- Los parámetros calculados se mostrarán aquí -->
+                </div>
+                
+                <div class="calculation-steps" id="calculation-steps">
+                    <!-- Los pasos de cálculo se mostrarán aquí -->
+                </div>
+            </section>
+            
+            <section class="card results-section">
+                <h2>Resultados de la Simulación</h2>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Calculando solución...</p>
+                </div>
+                
+                <div id="stability-info">
+                    <!-- La información de estabilidad se mostrará aquí -->
+                </div>
+                
+                <div class="table-container">
+                    <table id="results-table">
+                        <thead>
+                            <tr>
+                                <th>i</th>
+                                <th>x</th>
+                                <th>u(x,0)</th>
+                                <!-- Las columnas de tiempo se generarán dinámicamente -->
+                            </tr>
+                        </thead>
+                        <tbody id="results-body">
+                            <!-- Los resultados se llenarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+        
+        <footer>
+            <p>Resolvedor de Ecuación del Calor - Método Explícito de Diferencias Finitas &copy; 2023</p>
+        </footer>
+    </div>
+
+    <script>
+        // Referencias a elementos del DOM
+        const solveBtn = document.getElementById('solve-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const loading = document.getElementById('loading');
+        const resultsBody = document.getElementById('results-body');
+        const resultsTable = document.getElementById('results-table');
+        const stabilityInfo = document.getElementById('stability-info');
+        const calculatedParams = document.getElementById('calculated-params');
+        const calculationSteps = document.getElementById('calculation-steps');
+        
+        // Función para resolver la ecuación del calor
+        function solveHeatEquation() {
+            // Mostrar indicador de carga
+            loading.style.display = 'block';
+            stabilityInfo.innerHTML = '';
+            calculatedParams.innerHTML = '';
+            calculationSteps.innerHTML = '';
+            
+            // Obtener parámetros del formulario
+            const L = parseFloat(document.getElementById('length').value);
+            const T = parseFloat(document.getElementById('time').value);
+            const Nx = parseInt(document.getElementById('nx').value);
+            const Nt = parseInt(document.getElementById('nt').value);
+            const alpha = parseFloat(document.getElementById('alpha').value);
+            
+            // Calcular paso espacial y temporal
+            const dx = L / (Nx - 1);
+            const dt = T / Nt;
+            
+            // Calcular factor de estabilidad
+            const r = alpha * dt / (dx * dx);
+            
+            // Verificar estabilidad
+            const isStable = r <= 0.5;
+            
+            // Mostrar información de estabilidad
+            stabilityInfo.innerHTML = `
+                <div class="${isStable ? 'info-box' : 'warning-box'}">
+                    <strong>Condición de Estabilidad:</strong>
+                    <div class="math-display">
+                        r = α · Δt / (Δx)² = ${alpha.toFixed(4)} · ${dt.toFixed(4)} / (${dx.toFixed(4)})² = ${r.toFixed(6)}
+                    </div>
+                    <p>${isStable ? 
+                        '✅ La condición de estabilidad (r ≤ 0.5) se cumple. La solución es estable.' : 
+                        '⚠️ La condición de estabilidad (r ≤ 0.5) NO se cumple. La solución puede ser inestable.'}</p>
+                </div>
+            `;
+            
+            // Mostrar parámetros calculados
+            calculatedParams.innerHTML = `
+                <div class="parameter-card">
+                    <h3>Paso Espacial (Δx)</h3>
+                    <div class="parameter-value">${dx.toFixed(4)}</div>
+                    <p>Δx = L / (Nx - 1) = ${L} / ${Nx - 1}</p>
+                </div>
+                <div class="parameter-card">
+                    <h3>Paso Temporal (Δt)</h3>
+                    <div class="parameter-value">${dt.toFixed(4)}</div>
+                    <p>Δt = T / Nt = ${T} / ${Nt}</p>
+                </div>
+                <div class="parameter-card">
+                    <h3>Factor de Estabilidad (r)</h3>
+                    <div class="parameter-value">${r.toFixed(6)}</div>
+                    <p>r = α · Δt / (Δx)²</p>
+                </div>
+                <div class="parameter-card">
+                    <h3>Estabilidad</h3>
+                    <div class="parameter-value" style="color: ${isStable ? 'var(--success)' : 'var(--accent)'}">
+                        ${isStable ? 'ESTABLE' : 'INESTABLE'}
+                    </div>
+                    <p>r ${isStable ? '≤' : '>'} 0.5</p>
+                </div>
+            `;
+            
+            // Crear malla
+            const x = Array.from({length: Nx}, (_, i) => i * dx);
+            const u = Array(Nx).fill().map(() => Array(Nt + 1).fill(0));
+            
+            // Aplicar condiciones iniciales u(x,0) = sin(πx)
+            for (let i = 0; i < Nx; i++) {
+                u[i][0] = Math.sin(Math.PI * x[i]);
+            }
+            
+            // Aplicar condiciones de frontera u(0,t) = 0, u(L,t) = 0
+            for (let j = 0; j <= Nt; j++) {
+                u[0][j] = 0;
+                u[Nx - 1][j] = 0;
+            }
+            
+            // Resolver usando el método explícito
+            for (let j = 0; j < Nt; j++) {
+                for (let i = 1; i < Nx - 1; i++) {
+                    u[i][j + 1] = u[i][j] + r * (u[i + 1][j] - 2 * u[i][j] + u[i - 1][j]);
+                }
+            }
+            
+            // Mostrar pasos de cálculo para el primer paso temporal
+            calculationSteps.innerHTML = `
+                <h3>Primer paso temporal (j=0 a j=1):</h3>
+                ${generateCalculationSteps(u, x, r, Nx)}
+            `;
+            
+            // Mostrar resultados después de un breve retraso para simular procesamiento
+            setTimeout(() => {
+                displayResults(x, u, Nt);
+                loading.style.display = 'none';
+            }, 500);
+        }
+        
+        // Función para generar los pasos de cálculo
+        function generateCalculationSteps(u, x, r, Nx) {
+            let stepsHTML = '';
+            
+            for (let i = 1; i < Nx - 1; i++) {
+                const u_i = u[i][0].toFixed(6);
+                const u_im1 = u[i-1][0].toFixed(6);
+                const u_ip1 = u[i+1][0].toFixed(6);
+                const calculation = (u[i][0] + r * (u[i+1][0] - 2*u[i][0] + u[i-1][0])).toFixed(6);
+                
+                stepsHTML += `
+                    <div class="calculation-step">
+                        <p><span class="step-indicator">${i}</span> Para i = ${i}, x = ${x[i].toFixed(2)}:</p>
+                        <div class="math-display" style="font-size: 0.9rem; text-align: left; padding: 10px;">
+                            u<sub>${i}</sub><sup>1</sup> = u<sub>${i}</sub><sup>0</sup> + r (u<sub>${i+1}</sub><sup>0</sup> - 2u<sub>${i}</sub><sup>0</sup> + u<sub>${i-1}</sub><sup>0</sup>)<br>
+                            = ${u_i} + ${r.toFixed(6)} × (${u_ip1} - 2×${u_i} + ${u_im1})<br>
+                            = ${u_i} + ${r.toFixed(6)} × (${(u[i+1][0] - 2*u[i][0] + u[i-1][0]).toFixed(6)})<br>
+                            = ${calculation}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return stepsHTML;
+        }
+        
+        // Función para mostrar resultados en tabla
+        function displayResults(x, u, Nt) {
+            // Limpiar tabla
+            resultsBody.innerHTML = '';
+            
+            // Actualizar encabezados de tiempo
+            const headerRow = resultsTable.querySelector('thead tr');
+            // Mantener las primeras 3 columnas (i, x, u(x,0))
+            while (headerRow.children.length > 3) {
+                headerRow.removeChild(headerRow.lastChild);
+            }
+            
+            // Añadir encabezados para cada paso temporal
+            for (let j = 0; j <= Nt; j++) {
+                const th = document.createElement('th');
+                th.textContent = `u(x,${j})`;
+                if (j > 0) th.classList.add('time-header');
+                headerRow.appendChild(th);
+            }
+            
+            // Llenar tabla con resultados
+            for (let i = 0; i < x.length; i++) {
+                const row = document.createElement('tr');
+                
+                // Columna i
+                const tdI = document.createElement('td');
+                tdI.textContent = i;
+                row.appendChild(tdI);
+                
+                // Columna x
+                const tdX = document.createElement('td');
+                tdX.textContent = x[i].toFixed(4);
+                row.appendChild(tdX);
+                
+                // Columnas de tiempo
+                for (let j = 0; j <= Nt; j++) {
+                    const td = document.createElement('td');
+                    td.textContent = u[i][j].toFixed(6);
+                    row.appendChild(td);
+                }
+                
+                resultsBody.appendChild(row);
+            }
+        }
+        
+        // Función para restablecer el formulario
+        function resetForm() {
+            document.getElementById('length').value = '1.0';
+            document.getElementById('time').value = '0.1';
+            document.getElementById('nx').value = '5';
+            document.getElementById('nt').value = '10';
+            document.getElementById('alpha').value = '0.0842';
+            
+            // Limpiar resultados
+            resultsBody.innerHTML = '';
+            stabilityInfo.innerHTML = '';
+            calculatedParams.innerHTML = '';
+            calculationSteps.innerHTML = '';
+            
+            // Restaurar encabezados de tabla
+            const headerRow = resultsTable.querySelector('thead tr');
+            while (headerRow.children.length > 3) {
+                headerRow.removeChild(headerRow.lastChild);
+            }
+        }
+        
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar event listeners
+            solveBtn.addEventListener('click', solveHeatEquation);
+            resetBtn.addEventListener('click', resetForm);
+            
+            // Resolver automáticamente con los valores por defecto
+            solveHeatEquation();
+        });
+    </script>
+</body>
+</html>
